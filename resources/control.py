@@ -1,39 +1,20 @@
-from hashlib import new
+from pickle import TRUE
 from flask_restful import Resource, reqparse
 from models.account import AccountModel
 
-accounts = [{
-    'account_id': 1,
-    'conta': 'pagar',
-    'data': '01/10/2022',
-    'valor': 'R$30,00'
-    },
-            {
-    'account_id': 2,
-    'conta': 'pagar',
-    'data': '01/10/2022',
-    'valor': 'R$300,00'
-    }]
-
-        
-
 class Accounts(Resource):
     def get(self):
-        return accounts
+        return {'accounts': [account.json() for account in AccountModel.query.all()]}
     
     def post(self):
-        #verificando se a conta existe
-        # if AccountModel.find_account(account_id):
-        #    return {"message": "Accoutn id '{}' already exists".format(account_id)}, 400
-                
+               
         #agrupando os dados
         data = Account.arguments.parse_args()
-        #new_account = {'account_id': account_id, **data} #kwargs
         new_account_object = AccountModel(**data) # valores vindo em um objeto
-        # new_account = new_account_object.json()#convertendo o objeto para json
-        # accounts.append(new_account)
-        # return new_account, 200
-        new_account_object.save_account()
+        try:
+            new_account_object.save_account()
+        except:
+            return{'message': 'an error ocurred trying to save account'}, 500
         return new_account_object.json()
     
 
@@ -42,20 +23,21 @@ class Account(Resource):
     # definindo quais valores poderam ser enviados
     # qualquer informação diferente não é aceita
     arguments = reqparse.RequestParser()
-    arguments.add_argument('account_name')
-    arguments.add_argument('title')
-    arguments.add_argument('net_value')
-    arguments.add_argument('gross_value')
-    arguments.add_argument('details')
-    arguments.add_argument('paid_received')
-    arguments.add_argument('create_date')
-    arguments.add_argument('date_release')
-    arguments.add_argument('user')
+    arguments.add_argument('account_name', type=str, required=True , help="the field 'account_name' cannot be left blank, and use only string")
+    arguments.add_argument('title',type=str, required=True,help="the field 'account_name' cannot be left blank, and use only string")
+    arguments.add_argument('net_value',type=float, required=TRUE,help="the field 'account_name' cannot be left blank, and use only float")
+    arguments.add_argument('gross_value',type=float, required=False,help="the field 'account_name' cannot be left blank, and use only float")
+    arguments.add_argument('details',type=str, required=False,help="the field 'account_name' cannot be left blank, and use only string")
+    arguments.add_argument('paid_received',type=int, required=True,help="the field 'account_name' cannot be left blank, and use only Integer")
+    arguments.add_argument('create_date',type=str, required=False,help="the field 'account_name' cannot be left blank, and use only DateTime Format")
+    arguments.add_argument('date_release',type=str, required=False,help="the field 'account_name' cannot be left blank, and use only DateTime Format")
+    arguments.add_argument('user',type=str, required=True,help="the field 'account_name' cannot be left blank, and use only string")
     
-    def get(self, account_id):        
+    def get(self, account_id):
+        print(account_id)        
         account = AccountModel.find_account(account_id)
         if account:
-            return account
+            return account.json()
         """for account in accounts:
             if account['account_id'] == account_id:
                 return account
@@ -66,19 +48,25 @@ class Account(Resource):
         
     def put(self, account_id):
         data = Account.arguments.parse_args()
-        #new_account = {'account_id': account_id, **data} #kwargs
-        new_account_object = AccountModel(account_id, **data) # valores vindo em um objeto
-        new_account = new_account_object.json()#convertendo o objeto para json        
-        account = Account.find_account(account_id)
-        #edita a conta
-        if account:
-            account.update(new_account)
-            return new_account,200
-        #se a conta não existir, cria uma nova
-        accounts.append(new_account)
-        return new_account, 201
+        account_found = AccountModel.find_account(account_id)
+        if account_found:
+            account_found.update_account(**data)
+            account_found.save_account()
+            return account_found.json(), 200
+        account = AccountModel(account_id, **data)
+        #account.save()
+        try:
+            account.save_account()
+        except:
+            return{'message': 'an error ocurred trying to save account'}, 500
+        return account.json(), 201
     
     def delete(self, account_id):
-        global accounts
-        accounts = [account for account in accounts if account['account_id']!= account_id]
-        return {'message': 'account deleted'}
+        account = AccountModel.find_account(account_id)
+        if account:
+            try:
+                account.delete_account()
+            except:
+                return {'message': 'An error ocurred trying to deleto accoutn.'}, 500
+            return {'message': 'Account Deleted'}
+        return {'message': 'Account not found.'}, 404

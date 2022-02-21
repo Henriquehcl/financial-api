@@ -56,7 +56,8 @@ class AccountModel(database.Model):
         'date_release' : self.date_release,
         'user': self.user
         }  
-        
+    
+    @classmethod    
     def find_account(cls, account_id):
         account = cls.query.filter_by(account_id=account_id).first()
         if account:
@@ -66,3 +67,19 @@ class AccountModel(database.Model):
     def save_account(self):
         database.session.add(self)
         database.session.commit()
+        
+    def update_account(self,account_name ,title, net_value, gross_value, details, paid_received,create_date, date_release, user):
+        self.account_name = account_name
+        self.title = title
+        self.net_value = net_value
+        self.gross_value = gross_value
+        self.details = details
+        self.paid_received = int(paid_received)
+        self.create_date = create_date
+        self.date_release = date_release
+        self.user = user
+        
+    def delete_account(self):
+        database.session.delete(self)
+        database.session.commit()
+        
