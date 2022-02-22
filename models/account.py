@@ -15,6 +15,8 @@ class AccountModel(database.Model):
     account_id = database.Column(database.Integer, primary_key=True)
     account_name = database.Column(database.String(50), nullable=False)
     title = database.Column(database.String(50), nullable=False)
+    account_type = database.Column(database.Integer, nullable=False) # 0 or 1
+    due_date = database.Column(database.String(30), nullable=False)
     net_value = database.Column(database.Float, nullable=True)
     gross_value = database.Column(database.Float, nullable=False)
     details = database.Column(database.String(500), nullable=True)
@@ -27,11 +29,13 @@ class AccountModel(database.Model):
     
  
     #construtor
-    def __init__(self,account_name,title,net_value, gross_value, details, paid_received,create_date, date_release,user):
+    def __init__(self,account_name,account_type, due_date, title,net_value, gross_value, details, paid_received,create_date, date_release,user):
    
         #self.account_id = account_id
         self.account_name = account_name
         self.title = title
+        self.account_type = account_type
+        self.due_date = due_date
         self.net_value = net_value
         self.gross_value = gross_value
         self.details = details
@@ -47,6 +51,8 @@ class AccountModel(database.Model):
         return{
         'account_id': self.account_id,
         'account_name': self.account_name,
+        'account_type': self.account_type,
+        'due_date': self.due_date,
         'title': self.title,
         'net_value': self.net_value,
         'gross_value': self.gross_value,
@@ -68,9 +74,11 @@ class AccountModel(database.Model):
         database.session.add(self)
         database.session.commit()
         
-    def update_account(self,account_name ,title, net_value, gross_value, details, paid_received,create_date, date_release, user):
+    def update_account(self,account_name ,account_type, due_date, title, net_value, gross_value, details, paid_received,create_date, date_release, user):
         self.account_name = account_name
         self.title = title
+        self.account_type = account_type
+        self.due_date = due_date
         self.net_value = net_value
         self.gross_value = gross_value
         self.details = details
