@@ -1,24 +1,25 @@
 from pickle import TRUE
 from flask_restful import Resource, reqparse
-from models.account import AccountModel
+from models.user import UserModel
 
-class Accounts(Resource):
+class Users(Resource):
     def get(self):
-        return {'accounts': [account.json() for account in AccountModel.query.all()]}
+        return {'users': [user.json() for user in UserModel.query.all()]}
     
     def post(self):
                
         #agrupando os dados
-        data = Account.arguments.parse_args()
-        new_account_object = AccountModel(**data) # valores vindo em um objeto
+        data = User.arguments.parse_args()
+        new_user_object = UserModel(**data) # valores vindo em um objeto
         try:
-            new_account_object.save_account()
+            new_user_object.save_user()
         except:
-            return{'message': 'an error ocurred trying to save account'}, 500
-        return new_account_object.json()
+            return{'message': 'an error ocurred trying to save user'}, 500
+        return new_user_object.json()
     
 
-class Account(Resource):
+class User(Resource):
+    """
     # arguments***
     # definindo quais valores poderam ser enviados
     # qualquer informação diferente não é aceita
@@ -34,20 +35,18 @@ class Account(Resource):
     arguments.add_argument('create_date',type=str, required=False,help="the field 'create_date' cannot be left blank, and use only DateTime Format")
     arguments.add_argument('date_release',type=str, required=False,help="the field 'date_release' cannot be left blank, and use only DateTime Format")
     arguments.add_argument('user',type=str, required=True,help="the field 'user' cannot be left blank, and use only string")
+    """
     
-    def get(self, account_id):
-        print(account_id)        
-        account = AccountModel.find_account(account_id)
-        if account:
-            return account.json()
-        """for account in accounts:
-            if account['account_id'] == account_id:
-                return account
-            """
+    def get(self, user_id):
+        print(user_id)        
+        user = UserModel.find_user(user_id)
+        if user:
+            return user.json()
+
         return {'message':'Id not Found'}, 404
     
 
-        
+    """    
     def put(self, account_id):
         data = Account.arguments.parse_args()
         account_found = AccountModel.find_account(account_id)
@@ -62,13 +61,32 @@ class Account(Resource):
         except:
             return{'message': 'an error ocurred trying to save account'}, 500
         return account.json(), 201
-    
-    def delete(self, account_id):
-        account = AccountModel.find_account(account_id)
-        if account:
+    """
+    def delete(self, user_id):
+        user = UserModel.find_user(user_id)
+        if user:
             try:
-                account.delete_account()
+                user.delete_user()
             except:
-                return {'message': 'An error ocurred trying to deleto accoutn.'}, 500
-            return {'message': 'Account Deleted'}
-        return {'message': 'Account not found.'}, 404
+                return {'message': 'An error ocurred trying to delete user.'}, 500
+            return {'message': 'User Deleted'}
+        return {'message': 'User not found.'}, 404
+    
+class CreateUser(Resource):
+    
+    def post(self):
+        attributes = reqparse.RequestParser()
+        attributes.add_argument('user_name', type=str, required=True, help="the field 'user_name' connot be left blank")
+        attributes.add_argument('login', type=str, required=True, help="the field 'login' connot be left blank")
+        attributes.add_argument('password', type=str, required=True, help="the field 'password' connot be left blank")
+        attributes.add_argument('email', type=str, required=True, help="the field 'email' connot be left blank")
+        attributes.add_argument('create_date', type=str, required=True, help="the field 'create_date' connot be left blank")
+        attributes.add_argument('admin', type=int, required=True, help="the field 'admin' connot be left blank")
+        data = attributes.parse_args()
+        
+        if UserModel.find_by_login(data['login']):
+            return {"message": "The login'{}'already exists".format(data['login'])}
+        
+        user = UserModel(**data)
+        user.save_user()
+        return {'message': 'User created successfully'}, 201

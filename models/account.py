@@ -31,7 +31,6 @@ class AccountModel(database.Model):
     #construtor
     def __init__(self,account_name,account_type, due_date, title,net_value, gross_value, details, paid_received,create_date, date_release,user):
    
-        #self.account_id = account_id
         self.account_name = account_name
         self.title = title
         self.account_type = account_type
@@ -40,7 +39,6 @@ class AccountModel(database.Model):
         self.gross_value = gross_value
         self.details = details
         self.paid_received = int(paid_received)
-        #self.create_date = dumps(datetime.now(),default = converter.defaultconverter)
         self.create_date = dumps(datetime.now(),default = converter.defaultconverter)
         self.date_release = date_release
         self.user = user
