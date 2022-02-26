@@ -1,11 +1,13 @@
-from pickle import TRUE
+#from pickle import TRUE
 from flask_restful import Resource, reqparse
 from models.account import AccountModel
+from flask_jwt_extended import jwt_required
 
 class Accounts(Resource):
     def get(self):
         return {'accounts': [account.json() for account in AccountModel.query.all()]}
     
+    @jwt_required()
     def post(self):
                
         #agrupando os dados
@@ -27,7 +29,7 @@ class Account(Resource):
     arguments.add_argument('title',type=str, required=True,help="the field 'title' cannot be left blank, and use only string")
     arguments.add_argument('account_type', type=int, required=True, help="the field 'account_type' cannot be left blank")
     arguments.add_argument('due_date', type=str, required=False, help="the field 'due_date' cannot be left blank")
-    arguments.add_argument('net_value',type=float, required=TRUE,help="the field 'net_value' cannot be left blank, and use only float")
+    arguments.add_argument('net_value',type=float, required=True,help="the field 'net_value' cannot be left blank, and use only float")
     arguments.add_argument('gross_value',type=float, required=False,help="the field 'gross_value' cannot be left blank, and use only float")
     arguments.add_argument('details',type=str, required=False,help="the field 'details' cannot be left blank, and use only string")
     arguments.add_argument('paid_received',type=int, required=True,help="the field 'paid_received' cannot be left blank, and use only Integer")
@@ -47,7 +49,7 @@ class Account(Resource):
         return {'message':'Id not Found'}, 404
     
 
-        
+    @jwt_required()    
     def put(self, account_id):
         data = Account.arguments.parse_args()
         account_found = AccountModel.find_account(account_id)
@@ -63,6 +65,7 @@ class Account(Resource):
             return{'message': 'an error ocurred trying to save account'}, 500
         return account.json(), 201
     
+    @jwt_required()
     def delete(self, account_id):
         account = AccountModel.find_account(account_id)
         if account:

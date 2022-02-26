@@ -36,6 +36,7 @@ class UserModel(database.Model):
         return{
         'user_id': self.user_id,
         'user_name': self.user_name,
+        'login': self.login,
         'password': self.password,
         'email': self.email,
         'create_date' : self.create_date,

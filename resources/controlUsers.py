@@ -1,6 +1,21 @@
-from pickle import TRUE
+# from pickle import TRUE
 from flask_restful import Resource, reqparse
 from models.user import UserModel
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt
+from werkzeug.security import safe_str_cmp
+from blocklist import BLOCKLIST
+
+attributes = reqparse.RequestParser()
+attributes.add_argument('user_name', type=str, required=True, help="the field 'user_name' cannot be left blank")
+attributes.add_argument('login', type=str, required=True, help="the field 'login' cannot be left blank")
+attributes.add_argument('password', type=str, required=True, help="the field 'password' cannot be left blank")
+attributes.add_argument('email', type=str, required=True, help="the field 'email' cannot be left blank")
+attributes.add_argument('create_date', type=str, required=False, help="the field 'create_date' cannot be left blank")
+attributes.add_argument('admin', type=int, required=True, help="the field 'admin' cannot be left blank")
+
+login_attributes = reqparse.RequestParser()
+login_attributes.add_argument('login', type=str, required=True, help="The field 'login' cannot be left blank")
+login_attributes.add_argument('password',  type=str, required=True, help="The field 'password' cannot be left blank")
 
 class Users(Resource):
     def get(self):
@@ -75,13 +90,7 @@ class User(Resource):
 class CreateUser(Resource):
     
     def post(self):
-        attributes = reqparse.RequestParser()
-        attributes.add_argument('user_name', type=str, required=True, help="the field 'user_name' connot be left blank")
-        attributes.add_argument('login', type=str, required=True, help="the field 'login' connot be left blank")
-        attributes.add_argument('password', type=str, required=True, help="the field 'password' connot be left blank")
-        attributes.add_argument('email', type=str, required=True, help="the field 'email' connot be left blank")
-        attributes.add_argument('create_date', type=str, required=True, help="the field 'create_date' connot be left blank")
-        attributes.add_argument('admin', type=int, required=True, help="the field 'admin' connot be left blank")
+        
         data = attributes.parse_args()
         
         if UserModel.find_by_login(data['login']):
@@ -90,3 +99,28 @@ class CreateUser(Resource):
         user = UserModel(**data)
         user.save_user()
         return {'message': 'User created successfully'}, 201
+
+
+class UserLogin(Resource):
+    
+    @classmethod
+    def post(cls):
+        data = login_attributes.parse_args()
+        
+        user = UserModel.find_by_login(data['login'])
+        
+        # verificando usuário e senha
+        if user and safe_str_cmp(user.password, data['password']):
+            # se estiver correto, criar token de acesso
+            access_token = create_access_token(identity=user.user_id)
+            return {'access_token': access_token}, 200
+        return {'message': 'The username ou password is incorrect.'}, 401
+    
+    
+class userLogout(Resource):
+    
+    @jwt_required()
+    def post(self):
+        jwt_id = get_jwt()['jti']
+        BLOCKLIST.add(jwt_id)
+        return {'message': 'logged out  successfully'}, 200
