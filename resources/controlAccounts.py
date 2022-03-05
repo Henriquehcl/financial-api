@@ -2,9 +2,73 @@
 from flask_restful import Resource, reqparse
 from models.account import AccountModel
 from flask_jwt_extended import jwt_required
+import sqlite3
+
+def normalize_path_params(
+                        account_name = None,
+                        title = None,
+                        account_type = 0,
+                        value_min = 0,
+                        value_max = 100000,
+                        limit = 30,
+                        offset = 0, **data):
+    
+    if title:
+        return {
+            'account_name':account_name,
+            'title':title,
+            'account_type':account_type,
+            'value_min': value_min,
+            'value_max': value_max,
+            'limit':limit,
+            'offset':offset
+        }
+    return {
+            'account_name':account_name,
+            'title':title,
+            'account_type':account_type,
+            'value_min': value_min,
+            'value_max': value_max,
+            'limit':limit,
+            'offset':offset
+        }
+# pesquisa por URL
+path_params = reqparse.RequestParser()
+path_params.add_argument('account_name', type=str)
+path_params.add_argument('title', type=str)
+path_params.add_argument('account_type', type=int)
+path_params.add_argument('value_min', type=float)
+path_params.add_argument('value_max', type=float)
+path_params.add_argument('limit', type=float)
+path_params.add_argument('offset', type=float)
 
 class Accounts(Resource):
     def get(self):
+        #conectar ao DB
+        connection = sqlite3.connect('database.db')
+        cursor = connection.cursor()
+        
+        data = path_params.parse_args()
+        valid_data = {key:data[key] for key in data if data[key] is not None}
+        params = normalize_path_params(**valid_data)
+        
+        if not params.get('title'):
+            query = "SELECT * FROM accounts \
+                WHERE (account_name = ?) \
+                and account_type = ? \
+                and (due_value > ? and due_value < ?) \
+                LIMIT ? OFFSET ?"
+            tupla = tupla([params[key] for key in params])
+            result = cursor.execute(query, tupla)
+        else:
+            query = "SELECT * FROM accounts \
+                WHERE (account_name = ?) \
+                and title = ? \
+                and account_type = ? \
+                and (due_value > ? and due_value < ?) \
+                LIMIT ? OFFSET ?"
+            tupla = tupla([params[key] for key in params])
+            result = cursor.execute(query, tupla)
         return {'accounts': [account.json() for account in AccountModel.query.all()]}
     
     @jwt_required()
